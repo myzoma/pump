@@ -477,3 +477,361 @@ body {
     color: #ffa502;
     margin-left: 5px;
 }
+/* إضافة الأنماط المتبقية */
+
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px;
+    color: #cccccc;
+    font-size: 1.2rem;
+}
+
+.no-results::before {
+    content: "🔍";
+    display: block;
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+/* تحسينات إضافية للنافذة المنبثقة */
+.modal-body ul li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-body ul li i {
+    color: #00ff88;
+}
+
+/* تأثيرات التمرير */
+.coin-card {
+    scroll-margin-top: 100px;
+}
+
+/* تحسين شريط التمرير */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #ffed4e, #ffd700);
+}
+
+/* تحسينات للأجهزة اللوحية */
+@media (max-width: 1024px) {
+    .coins-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 15px;
+    }
+    .filter-buttons {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .filter-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 3% auto;
+    }
+    
+    .analysis-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+}
+
+/* تحسينات للهواتف الذكية */
+@media (max-width: 480px) {
+    .header-content h1 {
+        font-size: 1.8rem;
+    }
+    
+    .header-content p {
+        font-size: 1rem;
+    }
+    
+    .filters {
+        padding: 15px;
+    }
+    
+    .filter-buttons {
+        justify-content: center;
+    }
+    
+    .coin-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .coin-logo {
+        margin: 0 auto;
+    }
+    
+    .modal-header {
+        padding: 15px 20px;
+    }
+    
+    .modal-header h2 {
+        font-size: 1.3rem;
+    }
+    
+    .targets-section {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .analysis-item {
+        padding: 12px;
+    }
+}
+
+/* تأثيرات خاصة للعملات عالية الأداء */
+.coin-card[data-score="high"] {
+    animation: pulse 3s infinite;
+    border: 2px solid rgba(0, 255, 136, 0.5);
+}
+
+.coin-card[data-score="high"]::before {
+    background: linear-gradient(90deg, #00ff88, #2ed573);
+}
+
+/* تأثيرات للعملات متوسطة الأداء */
+.coin-card[data-score="medium"] {
+    border: 1px solid rgba(255, 165, 2, 0.3);
+}
+
+.coin-card[data-score="medium"]::before {
+    background: linear-gradient(90deg, #ffa502, #ff6348);
+}
+
+/* تأثيرات للعملات منخفضة الأداء */
+.coin-card[data-score="low"] {
+    border: 1px solid rgba(255, 71, 87, 0.2);
+    opacity: 0.8;
+}
+
+/* تحسينات لإمكانية الوصول */
+.coin-card:focus {
+    outline: 2px solid #ffd700;
+    outline-offset: 2px;
+}
+
+.filter-btn:focus {
+    outline: 2px solid #ffd700;
+    outline-offset: 2px;
+}
+
+/* تأثيرات التحميل المتقدمة */
+.loading-shimmer {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.1) 25%, 
+        rgba(255, 255, 255, 0.2) 50%, 
+        rgba(255, 255, 255, 0.1) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* تحسينات للطباعة */
+@media print {
+    .header, .filters, .modal {
+        display: none !important;
+    }
+    
+    .coin-card {
+        break-inside: avoid;
+        border: 1px solid #000;
+        margin-bottom: 10px;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+}
+
+/* تأثيرات متقدمة للخلفية */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 71, 87, 0.1) 0%, transparent 50%);
+    z-index: -1;
+    animation: backgroundShift 20s ease-in-out infinite;
+}
+
+@keyframes backgroundShift {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(180deg); }
+}
+
+/* تحسينات للنصوص */
+.metric-value.trend-strong {
+    font-weight: bold;
+    text-shadow: 0 0 10px currentColor;
+}
+
+/* تأثيرات الهوفر المتقدمة */
+.coin-card:hover .coin-logo {
+    transform: scale(1.1) rotate(360deg);
+    transition: transform 0.5s ease;
+}
+
+.coin-card:hover .score-fill {
+    animation: scoreGlow 1s ease-in-out;
+}
+
+@keyframes scoreGlow {
+    0%, 100% { box-shadow: none; }
+    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+}
+
+/* تحسينات للمؤشرات */
+.indicator-positive {
+    color: #00ff88;
+    text-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
+}
+
+.indicator-negative {
+    color: #ff4757;
+    text-shadow: 0 0 5px rgba(255, 71, 87, 0.3);
+}
+
+.indicator-neutral {
+    color: #ffa502;
+    text-shadow: 0 0 5px rgba(255, 165, 2, 0.3);
+}
+
+/* تأثيرات خاصة للأرقام */
+.number-highlight {
+    background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(255, 237, 78, 0.2));
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+/* تحسينات للأيقونات */
+.fas {
+    filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.3));
+}
+
+/* تأثيرات الانتقال المتقدمة */
+.page-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* تحسينات للتفاعل */
+.interactive-element {
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.interactive-element:active {
+    transform: scale(0.98);
+}
+
+/* تأثيرات للحالات الخاصة */
+.error-state {
+    background: rgba(255, 71, 87, 0.1);
+    border: 1px solid rgba(255, 71, 87, 0.3);
+    color: #ff4757;
+}
+
+.success-state {
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    color: #00ff88;
+}
+
+.warning-state {
+    background: rgba(255, 165, 2, 0.1);
+    border: 1px solid rgba(255, 165, 2, 0.3);
+    color: #ffa502;
+}
+
+/* تحسينات للنصوص العربية */
+.arabic-text {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+/* تأثيرات متقدمة للبطاقات */
+.coin-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 215, 0, 0.1) 50%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.coin-card:hover::after {
+    opacity: 1;
+}
+
+/* تحسينات للأداء */
+.gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* تأثيرات للتركيز */
+.focus-visible {
+    outline: 2px solid #ffd700;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.2);
+}
+
+/* تحسينات للحركة المخفضة */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* تحسينات للوضع المظلم */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    }
+}
+
+/* تحسينات للوضع الفاتح (في حالة الحاجة) */
+@media (prefers-color-scheme: light) {
+    body {
+        background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+    }
+}
