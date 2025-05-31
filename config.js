@@ -10,7 +10,7 @@ const CONFIG = {
     // إعدادات التحليل
     ANALYSIS_SETTINGS: {
         LIQUIDITY_DAYS: 7,
-        MIN_VOLUME_USDT: 1000000, // حد أدنى للحجم
+        MIN_VOLUME_USDT: 100000, // حد أدنى للحجم
         RSI_PERIOD: 14,
         MACD_FAST: 12,
         MACD_SLOW: 26,
@@ -25,7 +25,7 @@ const CONFIG = {
     ],
     
     // حد أدنى للسعر لاستبعاد العملات الصفرية
-    MIN_PRICE: 0.000001,
+    MIN_PRICE: 0,
     
     // عدد العملات المعروضة
     MAX_COINS: 100,
