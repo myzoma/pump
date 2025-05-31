@@ -10,7 +10,7 @@ const CONFIG = {
     // إعدادات التحليل
     ANALYSIS_SETTINGS: {
         LIQUIDITY_DAYS: 7,
-        MIN_VOLUME_USDT: 100000, // حد أدنى للحجم
+        MIN_VOLUME_USDT: 3000, // حد أدنى للحجم
         RSI_PERIOD: 14,
         MACD_FAST: 12,
         MACD_SLOW: 26,
