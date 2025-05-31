@@ -25,31 +25,35 @@ class CryptoPumpDetector {
         });
 
         // النافذة المنبثقة
-        document.getElementById('closeModal').addEventListener('click', () => {
-            document.getElementById('coinModal').style.display = 'none';
-        });
+        const closeModalBtn = document.getElementById('closeModal');
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', () => {
+                const coinModal = document.getElementById('coinModal');
+                if (coinModal) coinModal.style.display = 'none';
+            });
+        }
 
         window.addEventListener('click', (e) => {
-            if (e.target === document.getElementById('coinModal')) {
-                document.getElementById('coinModal').style.display = 'none';
+            const coinModal = document.getElementById('coinModal');
+            if (coinModal && e.target === coinModal) {
+                coinModal.style.display = 'none';
             }
         });
     }
 
     async loadData() {
         if (this.isLoading) return;
-        
         this.isLoading = true;
         this.showLoading(true);
 
         try {
             // جلب قائمة العملات
             const tickers = await this.fetchTickers();
-            
+
             // جلب بيانات الشموع للتحليل الفني
             const analysisPromises = tickers.map(ticker => this.analyzeCoins(ticker));
             const analysisResults = await Promise.all(analysisPromises);
-            
+
             // فلترة وتقييم العملات
             this.coins = analysisResults
                 .filter(coin => coin && this.isValidCoin(coin))
@@ -64,7 +68,7 @@ class CryptoPumpDetector {
 
             this.updateMarketStatus();
             this.renderCoins();
-            
+
         } catch (error) {
             console.error('خطأ في تحميل البيانات:', error);
             this.showError('فشل في تحميل البيانات. يرجى المحاولة مرة أخرى.');
@@ -77,7 +81,7 @@ class CryptoPumpDetector {
     async fetchTickers() {
         const response = await fetch(`${CONFIG.OKX_API.BASE_URL}/market/tickers?instType=SPOT`);
         const data = await response.json();
-        
+
         if (data.code !== '0') {
             throw new Error('فشل في جلب بيانات العملات');
         }
@@ -100,10 +104,10 @@ class CryptoPumpDetector {
 
             // التحليل الفني
             const technicalAnalysis = this.performTechnicalAnalysis(candleData);
-            
+
             // تحليل السيولة والحجم
             const liquidityAnalysis = this.analyzeLiquidity(candleData);
-            
+
             // تحليل القوة الشرائية
             const buyingPowerAnalysis = this.analyzeBuyingPower(candleData, ticker);
 
@@ -126,13 +130,13 @@ class CryptoPumpDetector {
     }
 
     async fetchCandleData(symbol, timeframe = '1H', limit = 200) {
-    const response = await fetch(
-        `${CONFIG.OKX_API.BASE_URL}/market/history-candles?instId=${symbol}&bar=${timeframe}&limit=${limit}`
-    );
+        const response = await fetch(
+            `${CONFIG.OKX_API.BASE_URL}/market/history-candles?instId=${symbol}&bar=${timeframe}&limit=${limit}`
+        );
         const data = await response.json();
-        
+
         if (data.code !== '0') return null;
-        
+
         return data.data.map(candle => ({
             timestamp: parseInt(candle[0]),
             open: parseFloat(candle[1]),
@@ -146,55 +150,55 @@ class CryptoPumpDetector {
 
     performTechnicalAnalysis(candleData) {
         const closes = candleData.map(c => c.close);
-        const highs = candleData.map(c => c.high);
-        const lows = candleData.map(c => c.low);
-        const volumes = candleData.map(c => c.volume);
 
         // حساب RSI
         const rsi = this.calculateRSI(closes, CONFIG.ANALYSIS_SETTINGS.RSI_PERIOD);
-        
+
         // حساب MACD
         const macd = this.calculateMACD(closes);
-        
+
         // حساب المتوسطات المتحركة
         const ma20 = this.calculateMA(closes, 20);
         const ma50 = this.calculateMA(closes, 50);
         const ma200 = this.calculateMA(closes, 200);
-        
+
         // تحليل اتجاه المتوسطات
-        const maAlignment = this.analyzeMATrend(closes[closes.length - 1], ma20, ma50, ma200);
-        
+        const lastClose = closes[closes.length - 1];
+        const ma20Last = ma20.length ? ma20[ma20.length - 1] : 0;
+        const ma50Last = ma50.length ? ma50[ma50.length - 1] : 0;
+        const ma200Last = ma200.length ? ma200[ma200.length - 1] : 0;
+        const maAlignment = this.analyzeMATrend(lastClose, ma20Last, ma50Last, ma200Last);
+
         return {
-            rsi: rsi[rsi.length - 1],
+            rsi: rsi.length ? rsi[rsi.length - 1] : 50,
             macd: {
-                macd: macd.macd[macd.macd.length - 1],
-                signal: macd.signal[macd.signal.length - 1],
-                histogram: macd.histogram[macd.histogram.length - 1]
+                macd: macd.macd.length ? macd.macd[macd.macd.length - 1] : 0,
+                signal: macd.signal.length ? macd.signal[macd.signal.length - 1] : 0,
+                histogram: macd.histogram.length ? macd.histogram[macd.histogram.length - 1] : 0
             },
             ma: {
-                ma20: ma20[ma20.length - 1],
-                ma50: ma50[ma50.length - 1],
-                ma200: ma200[ma200.length - 1]
+                ma20: ma20Last,
+                ma50: ma50Last,
+                ma200: ma200Last
             },
             maAlignment,
-            volatility: this.calculateVolatility(closes.slice(-20))
+            volatility: closes.length >= 20 ? this.calculateVolatility(closes.slice(-20)) : 0
         };
     }
 
     analyzeLiquidity(candleData) {
-        const last7Days = candleData.slice(-168); // آخر 7 أيام (ساعة واحدة × 24 × 7)
-        
+        const last7Days = candleData.slice(-168); // آخر 7 أيام (ساعة × 24 × 7)
         const totalVolume = last7Days.reduce((sum, candle) => sum + candle.volumeUsdt, 0);
-        const avgVolume = totalVolume / last7Days.length;
-        
+        const avgVolume = last7Days.length > 0 ? (totalVolume / last7Days.length) : 0;
+
         // تحليل تدفق السيولة
         const liquidityFlow = this.calculateLiquidityFlow(last7Days);
-        
+
         // نسبة التجميع والتصريف
         const accumulationDistribution = this.calculateAccumulationDistribution(last7Days);
-        
+
         return {
-            liquidityScore: Math.min(100, (totalVolume / 10000000) * 100), // تطبيع النتيجة
+            liquidityScore: Math.min(100, (totalVolume / 10000000) * 100),
             avgVolume7d: avgVolume,
             liquidityFlow,
             accumulationDistribution,
@@ -204,11 +208,8 @@ class CryptoPumpDetector {
 
     analyzeBuyingPower(candleData, ticker) {
         const last7Days = candleData.slice(-168);
-        
-        // حساب نسبة الشراء مقابل البيع
         let buyVolume = 0;
         let sellVolume = 0;
-        
         last7Days.forEach(candle => {
             if (candle.close > candle.open) {
                 buyVolume += candle.volumeUsdt;
@@ -216,10 +217,9 @@ class CryptoPumpDetector {
                 sellVolume += candle.volumeUsdt;
             }
         });
-        
         const totalVolume = buyVolume + sellVolume;
         const buyingPressure = totalVolume > 0 ? (buyVolume / totalVolume) * 100 : 50;
-        
+
         return {
             buyingPressure,
             buyVolume7d: buyVolume,
@@ -237,7 +237,7 @@ class CryptoPumpDetector {
             score += 15;
             factors.push('RSI متوازن');
         } else if (coin.rsi < 30) {
-            score += 20; // منطقة تشبع بيعي - فرصة شراء
+            score += 20;
             factors.push('RSI تشبع بيعي');
         }
 
@@ -285,24 +285,25 @@ class CryptoPumpDetector {
 
         coin.score = Math.min(100, score);
         coin.scoreFactors = factors;
-        
+
         return coin;
     }
+
     calculateRSI(prices, period = 14) {
         const gains = [];
         const losses = [];
-        
+
         for (let i = 1; i < prices.length; i++) {
             const change = prices[i] - prices[i - 1];
             gains.push(change > 0 ? change : 0);
             losses.push(change < 0 ? Math.abs(change) : 0);
         }
-        
+
         const rsi = [];
         for (let i = period - 1; i < gains.length; i++) {
-            const avgGain = gains.slice(i - period + 1, i + 1).reduce((a, b) => a + b) / period;
-            const avgLoss = losses.slice(i - period + 1, i + 1).reduce((a, b) => a + b) / period;
-            
+            const avgGain = gains.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0) / period;
+            const avgLoss = losses.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0) / period;
+
             if (avgLoss === 0) {
                 rsi.push(100);
             } else {
@@ -310,18 +311,24 @@ class CryptoPumpDetector {
                 rsi.push(100 - (100 / (1 + rs)));
             }
         }
-        
+
         return rsi;
     }
 
     calculateMACD(prices) {
         const ema12 = this.calculateEMA(prices, 12);
         const ema26 = this.calculateEMA(prices, 26);
-        
-        const macdLine = ema12.map((val, i) => val - ema26[i]);
+        const minLength = Math.min(ema12.length, ema26.length);
+        const ema12Cut = ema12.slice(-minLength);
+        const ema26Cut = ema26.slice(-minLength);
+
+        const macdLine = ema12Cut.map((val, i) => val - ema26Cut[i]);
         const signalLine = this.calculateEMA(macdLine, 9);
-        const histogram = macdLine.map((val, i) => val - signalLine[i]);
-        
+        const histMin = Math.min(macdLine.length, signalLine.length);
+        const macdLineCut = macdLine.slice(-histMin);
+        const signalLineCut = signalLine.slice(-histMin);
+        const histogram = macdLineCut.map((val, i) => val - signalLineCut[i]);
+
         return {
             macd: macdLine,
             signal: signalLine,
@@ -330,20 +337,21 @@ class CryptoPumpDetector {
     }
 
     calculateEMA(prices, period) {
+        if (!prices.length) return [];
         const multiplier = 2 / (period + 1);
         const ema = [prices[0]];
-        
+
         for (let i = 1; i < prices.length; i++) {
             ema.push((prices[i] * multiplier) + (ema[i - 1] * (1 - multiplier)));
         }
-        
+
         return ema;
     }
 
     calculateMA(prices, period) {
         const ma = [];
         for (let i = period - 1; i < prices.length; i++) {
-            const sum = prices.slice(i - period + 1, i + 1).reduce((a, b) => a + b);
+            const sum = prices.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
             ma.push(sum / period);
         }
         return ma;
@@ -363,28 +371,29 @@ class CryptoPumpDetector {
         for (let i = 1; i < prices.length; i++) {
             returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
         }
-        
-        const mean = returns.reduce((a, b) => a + b) / returns.length;
+        if (!returns.length) return 0;
+
+        const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
         const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - mean, 2), 0) / returns.length;
-        
+
         return Math.sqrt(variance) * 100;
     }
 
     calculateLiquidityFlow(candleData) {
         let inflow = 0;
         let outflow = 0;
-        
+
         candleData.forEach(candle => {
             const typicalPrice = (candle.high + candle.low + candle.close) / 3;
             const moneyFlow = typicalPrice * candle.volume;
-            
+
             if (candle.close > candle.open) {
                 inflow += moneyFlow;
             } else {
                 outflow += moneyFlow;
             }
         });
-        
+
         const totalFlow = inflow + outflow;
         return totalFlow > 0 ? (inflow / totalFlow) * 100 : 50;
     }
@@ -392,13 +401,13 @@ class CryptoPumpDetector {
     calculateAccumulationDistribution(candleData) {
         let accumulation = 0;
         let distribution = 0;
-        
+
         candleData.forEach(candle => {
             const range = candle.high - candle.low;
             if (range > 0) {
                 const clv = ((candle.close - candle.low) - (candle.high - candle.close)) / range;
                 const adValue = clv * candle.volume;
-                
+
                 if (adValue > 0) {
                     accumulation += adValue;
                 } else {
@@ -406,46 +415,50 @@ class CryptoPumpDetector {
                 }
             }
         });
-        
+
         const total = accumulation + distribution;
         return total > 0 ? (accumulation / total) * 100 : 50;
     }
 
     calculateVolumeTrend(candleData) {
         const volumes = candleData.map(c => c.volume);
-        const firstHalf = volumes.slice(0, Math.floor(volumes.length / 2));
-        const secondHalf = volumes.slice(Math.floor(volumes.length / 2));
-        
-        const firstAvg = firstHalf.reduce((a, b) => a + b) / firstHalf.length;
-        const secondAvg = secondHalf.reduce((a, b) => a + b) / secondHalf.length;
-        
-        return ((secondAvg - firstAvg) / firstAvg) * 100;
+        const half = Math.floor(volumes.length / 2);
+        const firstHalf = volumes.slice(0, half);
+        const secondHalf = volumes.slice(half);
+
+        const firstAvg = firstHalf.length > 0 ? (firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length) : 0;
+        const secondAvg = secondHalf.length > 0 ? (secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length) : 0;
+
+        return firstAvg === 0 ? 0 : ((secondAvg - firstAvg) / firstAvg) * 100;
     }
 
     isValidCoin(coin) {
-        return coin && 
-               coin.price > CONFIG.MIN_PRICE &&
-               coin.volume24h > CONFIG.ANALYSIS_SETTINGS.MIN_VOLUME_USDT &&
-               !this.isExcludedCoin(coin.fullSymbol);
+        return coin &&
+            coin.price > CONFIG.MIN_PRICE &&
+            coin.volume24h > CONFIG.ANALYSIS_SETTINGS.MIN_VOLUME_USDT &&
+            !this.isExcludedCoin(coin.fullSymbol);
     }
 
     isExcludedCoin(symbol) {
         const baseSymbol = symbol.replace('-USDT', '');
         return CONFIG.EXCLUDED_COINS.includes(baseSymbol) ||
-               baseSymbol.includes('UP') ||
-               baseSymbol.includes('DOWN') ||
-               baseSymbol.includes('BEAR') ||
-               baseSymbol.includes('BULL');
+            baseSymbol.includes('UP') ||
+            baseSymbol.includes('DOWN') ||
+            baseSymbol.includes('BEAR') ||
+            baseSymbol.includes('BULL');
     }
 
     updateMarketStatus() {
+        const statusElement = document.getElementById('marketStatus');
+        if (!this.coins.length || !statusElement) return;
+
         const avgScore = this.coins.reduce((sum, coin) => sum + coin.score, 0) / this.coins.length;
         const positiveCoins = this.coins.filter(coin => coin.change24h > 0).length;
         const totalCoins = this.coins.length;
-        
+
         let status = '';
         let statusClass = '';
-        
+
         if (avgScore > 70 && (positiveCoins / totalCoins) > 0.6) {
             status = 'السوق في حالة صعود قوي 📈';
             statusClass = 'trend-up';
@@ -456,23 +469,23 @@ class CryptoPumpDetector {
             status = 'السوق في حالة هبوط 📉';
             statusClass = 'trend-down';
         }
-        
-        const statusElement = document.getElementById('marketStatus');
+
         statusElement.textContent = status;
         statusElement.className = statusClass;
     }
 
     renderCoins() {
         const grid = document.getElementById('coinsGrid');
+        if (!grid) return;
         const filteredCoins = this.filterCoins();
-        
+
         if (filteredCoins.length === 0) {
             grid.innerHTML = '<div class="no-results">لا توجد عملات تطابق المعايير المحددة</div>';
             return;
         }
-        
+
         grid.innerHTML = filteredCoins.map(coin => this.createCoinCard(coin)).join('');
-        
+
         // إضافة مستمعي الأحداث للبطاقات
         document.querySelectorAll('.coin-card').forEach(card => {
             card.addEventListener('click', () => {
@@ -487,7 +500,6 @@ class CryptoPumpDetector {
         if (this.currentFilter === 'all') {
             return this.coins;
         }
-        
         const minScore = parseInt(this.currentFilter);
         return this.coins.filter(coin => coin.score >= minScore);
     }
@@ -495,7 +507,7 @@ class CryptoPumpDetector {
     createCoinCard(coin) {
         const changeClass = coin.change24h >= 0 ? 'positive' : 'negative';
         const changeIcon = coin.change24h >= 0 ? '↗' : '↘';
-        
+
         return `
             <div class="coin-card fade-in" data-symbol="${coin.symbol}">
                 <div class="coin-header">
@@ -507,7 +519,6 @@ class CryptoPumpDetector {
                         <span class="coin-rank">المركز ${coin.rank}</span>
                     </div>
                 </div>
-                
                 <div class="coin-metrics">
                     <div class="metric-row">
                         <span class="metric-label">السعر:</span>
@@ -530,7 +541,6 @@ class CryptoPumpDetector {
                         </span>
                     </div>
                 </div>
-                
                 <div class="score-bar">
                     <div class="score-fill" style="width: ${coin.score}%"></div>
                 </div>
@@ -542,18 +552,22 @@ class CryptoPumpDetector {
     }
 
     showCoinDetails(coin) {
+        if (!coin) return;
+
         const modal = document.getElementById('coinModal');
         const modalTitle = document.getElementById('modalTitle');
         const modalBody = document.getElementById('modalBody');
-        
+
+        if (!modal || !modalTitle || !modalBody) return;
+
         modalTitle.textContent = `تحليل مفصل - ${coin.symbol}`;
-        
+
         // حساب الأهداف والدعوم
         const targets = this.calculateTargets(coin);
         const supports = this.calculateSupports(coin);
         const entryPoint = this.calculateEntryPoint(coin);
         const stopLoss = this.calculateStopLoss(coin, entryPoint);
-        
+
         modalBody.innerHTML = `
             <div class="analysis-section">
                 <h3><i class="fas fa-chart-line"></i> معلومات أساسية</h3>
@@ -618,10 +632,8 @@ class CryptoPumpDetector {
                     <div class="liquidity-fill" style="width: ${coin.liquidityFlow}%"></div>
                 </div>
                 <p>تدفق السيولة: ${coin.liquidityFlow.toFixed(1)}%</p>
-                
                 <div class="analysis-grid">
                     <div class="analysis-item">
-                        <div class="label
                         <div class="label">نقاط السيولة</div>
                         <div class="value">${coin.liquidityScore.toFixed(1)}/100</div>
                     </div>
@@ -656,7 +668,6 @@ class CryptoPumpDetector {
                             <div class="value positive">$${target.toFixed(6)}</div>
                         </div>
                     `).join('')}
-                    
                     ${supports.map((support, index) => `
                         <div class="target-item support-item">
                             <div class="label">الدعم ${index + 1}</div>
@@ -674,7 +685,6 @@ class CryptoPumpDetector {
                         $${entryPoint.toFixed(6)}
                     </div>
                 </div>
-                
                 <div class="analysis-grid" style="margin-top: 15px;">
                     <div class="analysis-item support-item">
                         <div class="label">وقف الخسارة</div>
@@ -708,23 +718,20 @@ class CryptoPumpDetector {
                 </div>
             </div>
         `;
-        
+
         modal.style.display = 'block';
     }
 
     calculateTargets(coin) {
         const currentPrice = coin.price;
         const volatility = coin.volatility / 100;
-        
-        // حساب الأهداف بناءً على المقاومات الفنية والتقلبات
         const targets = [];
-        const baseIncrease = Math.max(0.05, volatility * 2); // 5% كحد أدنى
-        
+        const baseIncrease = Math.max(0.05, volatility * 2);
+
         for (let i = 1; i <= 3; i++) {
             const targetPrice = currentPrice * (1 + (baseIncrease * i * 1.5));
             targets.push(targetPrice);
         }
-        
         return targets;
     }
 
@@ -732,48 +739,35 @@ class CryptoPumpDetector {
         const currentPrice = coin.price;
         const ma20 = coin.ma.ma20;
         const ma50 = coin.ma.ma50;
-        
+
         const supports = [];
-        
-        // الدعم الأول: المتوسط المتحرك 20
-        if (ma20 < currentPrice) {
-            supports.push(ma20);
-        }
-        
-        // الدعم الثاني: المتوسط المتحرك 50
-        if (ma50 < currentPrice && ma50 < ma20) {
-            supports.push(ma50);
-        }
-        
+        if (ma20 < currentPrice) supports.push(ma20);
+        if (ma50 < currentPrice && ma50 < ma20) supports.push(ma50);
+
         // الدعم الثالث: مستوى فني بناءً على التقلبات
         const technicalSupport = currentPrice * (1 - (coin.volatility / 100) * 2);
         supports.push(technicalSupport);
-        
-        return supports.sort((a, b) => b - a); // ترتيب تنازلي
+
+        return supports.sort((a, b) => b - a);
     }
 
     calculateEntryPoint(coin) {
         const currentPrice = coin.price;
         const rsi = coin.rsi;
         const macdPositive = coin.macd.macd > coin.macd.signal;
-        
-        // تحديد نقطة الدخول بناءً على المؤشرات
+
         if (rsi < 40 && macdPositive) {
-            // دخول فوري - العملة في منطقة تشبع بيعي مع إشارة إيجابية
             return currentPrice;
         } else if (rsi > 60) {
-            // انتظار تصحيح - دخول عند مستوى أقل
             return currentPrice * 0.95;
         } else {
-            // دخول عند المستوى الحالي أو قريب منه
             return currentPrice * 0.98;
         }
     }
 
     calculateStopLoss(coin, entryPoint) {
         const volatility = coin.volatility / 100;
-        const riskPercentage = Math.max(0.08, volatility * 1.5); // 8% كحد أدنى
-        
+        const riskPercentage = Math.max(0.08, volatility * 1.5);
         return entryPoint * (1 - riskPercentage);
     }
 
@@ -834,7 +828,8 @@ class CryptoPumpDetector {
     showLoading(show) {
         const loading = document.getElementById('loading');
         const grid = document.getElementById('coinsGrid');
-        
+        if (!loading || !grid) return;
+
         if (show) {
             loading.style.display = 'block';
             grid.style.display = 'none';
@@ -846,6 +841,7 @@ class CryptoPumpDetector {
 
     showError(message) {
         const grid = document.getElementById('coinsGrid');
+        if (!grid) return;
         grid.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 50px; color: #ff4757;">
                 <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
@@ -859,7 +855,6 @@ class CryptoPumpDetector {
     }
 
     startAutoUpdate() {
-        // تحديث البيانات كل 30 ثانية
         setInterval(() => {
             if (!this.isLoading) {
                 this.loadData();
@@ -867,20 +862,17 @@ class CryptoPumpDetector {
         }, CONFIG.UPDATE_INTERVAL);
     }
 
-    // إزالة العملات التي تفقد التقييم
     removeUnderperformingCoins() {
-        const threshold = 40; // الحد الأدنى للنقاط
+        const threshold = 40;
         const initialCount = this.coins.length;
-        
         this.coins = this.coins.filter(coin => coin.score >= threshold);
-        
+
         if (this.coins.length < initialCount) {
             console.log(`تم إزالة ${initialCount - this.coins.length} عملة لعدم استيفاء المعايير`);
             this.renderCoins();
         }
     }
 
-    // تحديث ترتيب العملات
     updateRankings() {
         this.coins.sort((a, b) => b.score - a.score);
         this.coins.forEach((coin, index) => {
