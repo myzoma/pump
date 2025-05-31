@@ -126,9 +126,9 @@ class CryptoPumpDetector {
     }
 
     async fetchCandleData(symbol, timeframe = '1H', limit = 200) {
-        const response = await fetch(
-            `${CONFIG.OKX_API.BASE_URL}/market/history-candles?instId=${symbol}&bar=${timeframe}&limit=${limit}`
-        );
+    const response = await fetch(
+        `${CONFIG.OKX_API.BASE_URL}/market/history-candles?instId=${symbol}&bar=${timeframe}&limit=${limit}`
+    );
         const data = await response.json();
         
         if (data.code !== '0') return null;
