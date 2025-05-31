@@ -31,5 +31,5 @@ const CONFIG = {
     MAX_COINS: 100,
     
     // فترة التحديث بالميلي ثانية
-    UPDATE_INTERVAL: 30000 // 30 ثانية
+    UPDATE_INTERVAL: 900000 // 30 ثانية
 };
