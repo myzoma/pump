@@ -935,3 +935,14 @@ document.addEventListener('keydown', (e) => {
         location.reload();
     }
 });
+// أضف هذا في نهاية الملف
+const detector = new CryptoPumpDetector();
+
+// اختبار API
+fetch('https://www.okx.com/api/v5/market/tickers?instType=SPOT')
+.then(response => response.json())
+.then(data => {
+    console.log('أول 3 عملات من OKX:', data.data.slice(0, 3));
+})
+.catch(error => console.error('خطأ API:', error));
+
