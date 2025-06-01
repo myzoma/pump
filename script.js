@@ -26,6 +26,21 @@ class CryptoPumpDetector {
             'Content-Type': 'application/json'
         };
     }
+async fetchTickers() {
+    const response = await fetch(`${CONFIG.OKX_API.BASE_URL}/market/tickers?instType=SPOT`);
+    const data = await response.json();
+    console.log('بيانات حقيقية من OKX:', data.data[0]);
+    
+    return data.data
+        .filter(ticker => ticker.instId.endsWith('-USDT'))
+        .filter(ticker => !this.isExcludedCoin(ticker.instId))
+        .filter(ticker => parseFloat(ticker.last) >= CONFIG.MIN_PRICE);
+}
+
+isExcludedCoin(symbol) {
+    const base = symbol.replace('-USDT', '');
+    return CONFIG.EXCLUDED_COINS.includes(base);
+}
 
     async init() {
         this.setupEventListeners();
