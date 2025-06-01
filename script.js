@@ -7,6 +7,26 @@ class CryptoPumpDetector {
         this.init();
     }
 
+    // إضافة دالة لإنشاء التوقيع
+    createSignature(timestamp, method, requestPath, body = '') {
+        const message = timestamp + method + requestPath + body;
+        return CryptoJS.enc.Base64.stringify(CryptoJS.HmacSHA256(message, CONFIG.OKX_API.SECRET_KEY));
+    }
+
+    // إضافة دالة لإنشاء headers مع التوقيع
+    getAuthHeaders(method, requestPath, body = '') {
+        const timestamp = new Date().toISOString();
+        const signature = this.createSignature(timestamp, method, requestPath, body);
+        
+        return {
+            'OK-ACCESS-KEY': CONFIG.OKX_API.API_KEY,
+            'OK-ACCESS-SIGN': signature,
+            'OK-ACCESS-TIMESTAMP': timestamp,
+            'OK-ACCESS-PASSPHRASE': CONFIG.OKX_API.PASSPHRASE,
+            'Content-Type': 'application/json'
+        };
+    }
+
     async init() {
         this.setupEventListeners();
         await this.loadData();
@@ -49,7 +69,6 @@ class CryptoPumpDetector {
         try {
             // جلب قائمة العملات
             const tickers = await this.fetchTickers();
-
             // جلب بيانات الشموع للتحليل الفني
             const analysisPromises = tickers.map(ticker => this.analyzeCoins(ticker));
             const analysisResults = await Promise.all(analysisPromises);
@@ -68,7 +87,6 @@ class CryptoPumpDetector {
 
             this.updateMarketStatus();
             this.renderCoins();
-
         } catch (error) {
             console.error('خطأ في تحميل البيانات:', error);
             this.showError('فشل في تحميل البيانات. يرجى المحاولة مرة أخرى.');
@@ -79,9 +97,16 @@ class CryptoPumpDetector {
     }
 
     async fetchTickers() {
-        const response = await fetch(`${CONFIG.OKX_API.BASE_URL}/market/tickers?instType=SPOT`);
+        const requestPath = '/api/v5/market/tickers?instType=SPOT';
+        const headers = this.getAuthHeaders('GET', requestPath);
+        
+        const response = await fetch(`${CONFIG.OKX_API.BASE_URL}${requestPath}`, {
+            method: 'GET',
+            headers: headers
+        });
+        
         const data = await response.json();
-
+        
         if (data.code !== '0') {
             throw new Error('فشل في جلب بيانات العملات');
         }
@@ -104,10 +129,8 @@ class CryptoPumpDetector {
 
             // التحليل الفني
             const technicalAnalysis = this.performTechnicalAnalysis(candleData);
-
             // تحليل السيولة والحجم
             const liquidityAnalysis = this.analyzeLiquidity(candleData);
-
             // تحليل القوة الشرائية
             const buyingPowerAnalysis = this.analyzeBuyingPower(candleData, ticker);
 
@@ -130,11 +153,15 @@ class CryptoPumpDetector {
     }
 
     async fetchCandleData(symbol, timeframe = '1H', limit = 200) {
-        const response = await fetch(
-            `${CONFIG.OKX_API.BASE_URL}/market/history-candles?instId=${symbol}&bar=${timeframe}&limit=${limit}`
-        );
+        const requestPath = `/api/v5/market/history-candles?instId=${symbol}&bar=${timeframe}&limit=${limit}`;
+        const headers = this.getAuthHeaders('GET', requestPath);
+        
+        const response = await fetch(`${CONFIG.OKX_API.BASE_URL}${requestPath}`, {
+            method: 'GET',
+            headers: headers
+        });
+        
         const data = await response.json();
-
         if (data.code !== '0') return null;
 
         return data.data.map(candle => ({
@@ -148,15 +175,14 @@ class CryptoPumpDetector {
         })).reverse();
     }
 
+    // باقي الدوال تبقى كما هي بدون تغيير...
     performTechnicalAnalysis(candleData) {
         const closes = candleData.map(c => c.close);
 
         // حساب RSI
         const rsi = this.calculateRSI(closes, CONFIG.ANALYSIS_SETTINGS.RSI_PERIOD);
-
         // حساب MACD
         const macd = this.calculateMACD(closes);
-
         // حساب المتوسطات المتحركة
         const ma20 = this.calculateMA(closes, 20);
         const ma50 = this.calculateMA(closes, 50);
@@ -167,6 +193,7 @@ class CryptoPumpDetector {
         const ma20Last = ma20.length ? ma20[ma20.length - 1] : 0;
         const ma50Last = ma50.length ? ma50[ma50.length - 1] : 0;
         const ma200Last = ma200.length ? ma200[ma200.length - 1] : 0;
+
         const maAlignment = this.analyzeMATrend(lastClose, ma20Last, ma50Last, ma200Last);
 
         return {
@@ -186,6 +213,12 @@ class CryptoPumpDetector {
         };
     }
 
+    // باقي الدوال تبقى كما هي...
+    // [يمكنك نسخ باقي الدوال من الكود الأصلي بدون تغيير]
+}
+
+
+    
     analyzeLiquidity(candleData) {
         const last7Days = candleData.slice(-168); // آخر 7 أيام (ساعة × 24 × 7)
         const totalVolume = last7Days.reduce((sum, candle) => sum + candle.volumeUsdt, 0);
