@@ -922,6 +922,19 @@ class CryptoPumpDetector {
 document.addEventListener('DOMContentLoaded', () => {
     new CryptoPumpDetector();
 });
+async fetchRealData() {
+    try {
+        const response = await fetch('https://www.okx.com/api/v5/market/tickers?instType=SPOT');
+        const data = await response.json();
+        console.log('بيانات حقيقية:', data.data.slice(0, 3));
+        return data.data;
+    } catch (error) {
+        console.error('خطأ:', error);
+    }
+}
+
+// استدعي هذه الدالة
+detector.fetchRealData();
 
 // إضافة مستمع للأخطاء العامة
 window.addEventListener('error', (e) => {
