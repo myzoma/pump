@@ -97,6 +97,10 @@ class CryptoPumpDetector {
     }
 
     async fetchTickers() {
+         console.log('جلب البيانات من OKX API...');
+    console.log('URL:', `${CONFIG.OKX_API.BASE_URL}/market/tickers?instType=SPOT`);
+    
+    const response = await fetch(`${CONFIG.OKX_API.BASE_URL}/market/tickers?instType=SPOT`);
         const requestPath = '/api/v5/market/tickers?instType=SPOT';
         const headers = this.getAuthHeaders('GET', requestPath);
         
